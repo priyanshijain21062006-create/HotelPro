@@ -8,7 +8,7 @@ const bookingSchema = new mongoose.Schema({
   totalDays: { type: Number, required: true, min: 1 },
   totalAmount: { type: Number, required: true, min: 0 },
   guestName: { type: String, required: true, trim: true },
-  status: { type: String, enum: ['active', 'cancelled'], default: 'active' }
+  status: { type: String, enum: ['active', 'cancelled', 'completed'], default: 'active' }
 }, { timestamps: true });
 
 export default mongoose.model('Booking', bookingSchema);

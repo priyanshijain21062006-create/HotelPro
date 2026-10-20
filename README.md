@@ -5,13 +5,14 @@ A full-stack hotel booking starter built from the supplied product brief. It con
 ## Run locally
 
 1. Install Node.js and MongoDB, then start MongoDB.
-2. In `Server`, copy `.env.example` to `.env`, set a unique random `JWT_SECRET`, and run `npm install` followed by `npm run dev`.
+2. In `Server`, copy `.env.example` to `.env`, set a unique random `JWT_SECRET` and a private `ADMIN_PASSWORD`, and run `npm install`.
 3. In `Client`, run `npm install` followed by `npm run dev`. Copy `.env.example` to `.env` only if the API is not at `http://localhost:5000/api`.
 4. Open the Vite URL printed by the client.
+5. In another `Server` terminal, run `npm run create-admin` to provision the configured administrator, then `npm run seed:demo` to add fictional guest history and sample rooms with photos.
 
 ## Create an administrator
 
-Public signup always assigns the `customer` role; a client cannot promote itself by changing a request field. To create an administrator, create a user in the database through a trusted operator workflow and set `role` to `admin`. The `passwordHash` field must contain a bcrypt hash (bcryptjs, cost 12). Never expose an admin creation endpoint to public signup.
+Public signup always assigns the `customer` role; a client cannot promote itself by changing a request field. The trusted `npm run create-admin` script reads `ADMIN_NAME`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD` from the server `.env` and creates the account with a bcrypt password hash. Never expose admin creation to public signup.
 
 ## Features
 
@@ -19,6 +20,7 @@ Public signup always assigns the `customer` role; a client cannot promote itself
 - Public room collection, admin room creation/deletion, and guest directory.
 - Date-based reservations with overlap checks, total calculation, booking history, and cancellation.
 - Responsive home, rooms, account, booking, and admin screens.
+- Idempotent demo seeding with four fictional guests, five historical bookings, and four sample rooms with Unsplash photo URLs.
 
 ## Payment handling
 
@@ -26,4 +28,4 @@ The application calculates and records the reservation amount. It does not colle
 
 ## API
 
-`GET /api/health`, `POST /api/auth/signup`, `POST /api/auth/login`, `GET /api/rooms`, `GET/POST /api/bookings`, `PATCH /api/bookings/:id/cancel`, `POST/DELETE /api/admin/rooms`, and `GET /api/admin/users`.
+`GET /api/health`, `POST /api/auth/signup`, `POST /api/auth/login`, `GET /api/rooms`, `GET/POST /api/bookings`, `PATCH /api/bookings/:id/cancel`, `POST/DELETE /api/admin/rooms`, and `GET /api/admin/users`. Booking states include active, cancelled, and completed.
