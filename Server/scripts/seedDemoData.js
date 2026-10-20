@@ -5,13 +5,22 @@ import mongoose from 'mongoose';
 import User from '../models/User.js';
 import Room from '../models/Room.js';
 import Booking from '../models/Booking.js';
+import Hotel from '../models/Hotel.js';
 
-const photo = id => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=1200&q=85`;
+const photo = filename => `/images/${filename}`;
+const hotelSeed = {
+  name: 'HotelPro Riverside', slug: 'hotelpro-riverside',
+  description: 'A relaxed city retreat with thoughtful rooms, warm service, and an easy connection to the riverfront.',
+  address: '18 Riverside Walk', city: 'Mumbai', country: 'India',
+  contactEmail: 'stay@hotelpro.example.test', contactPhone: '+91 22 5550 0100',
+  amenities: ['Restaurant', 'River views', 'Wi-Fi', '24-hour desk'],
+  photos: [photo('hero-hotel.jpg'), photo('hotel-lobby.jpg')], isActive: true
+};
 const roomSeed = [
-  { roomNumber: '101', type: 'Double', description: 'A warm, light-filled room for two, with a quiet reading nook.', rent: 6200, count: 1, amenities: ['King bed', 'Rain shower', 'Breakfast'], photos: [photo('photo-1611892440504-42a792e24d32')] },
-  { roomNumber: '202', type: 'Deluxe', description: 'Soft textures and a private balcony overlooking the garden.', rent: 8900, count: 1, amenities: ['Balcony', 'Garden view', 'Lounge'], photos: [photo('photo-1616594039964-ae9021a400a0')] },
-  { roomNumber: '301', type: 'Suite', description: 'A spacious suite with a separate sitting room and deep soaking tub.', rent: 14500, count: 1, amenities: ['Suite', 'Soaking tub', 'King bed'], photos: [photo('photo-1566665797739-1674de7a421a')] },
-  { roomNumber: '404', type: 'Single', description: 'A calm, considered hideaway for a restful night in the city.', rent: 4800, count: 1, amenities: ['Work desk', 'City view', 'Coffee'], photos: [photo('photo-1571896349842-33c89424de2d')] }
+  { roomNumber: '101', type: 'Double', description: 'A warm, light-filled room for two, with a quiet reading nook.', rent: 6200, count: 1, amenities: ['King bed', 'Rain shower', 'Breakfast'], photos: [photo('room-double.jpg')] },
+  { roomNumber: '202', type: 'Deluxe', description: 'Soft textures and a private balcony overlooking the garden.', rent: 8900, count: 1, amenities: ['Balcony', 'Garden view', 'Lounge'], photos: [photo('room-deluxe.jpg')] },
+  { roomNumber: '301', type: 'Suite', description: 'A spacious suite with a separate sitting room and deep soaking tub.', rent: 14500, count: 1, amenities: ['Suite', 'Soaking tub', 'King bed'], photos: [photo('room-suite.jpg')] },
+  { roomNumber: '404', type: 'Single', description: 'A calm, considered hideaway for a restful night in the city.', rent: 4800, count: 1, amenities: ['Work desk', 'City view', 'Coffee'], photos: [photo('hotel-lobby.jpg')] }
 ];
 const customerSeed = [
   { name: 'Mira Shah', email: 'mira.shah@example.test', phone: '+91 90000 10001' },
@@ -28,9 +37,13 @@ function dateDaysAgo(days) {
 }
 
 await mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/hotelpro');
+const indexes = await Room.collection.indexes().catch(() => []);
+if (indexes.some(index => index.name === 'roomNumber_1')) await Room.collection.dropIndex('roomNumber_1');
+await Room.collection.createIndex({ hotel: 1, roomNumber: 1 }, { unique: true });
+const hotel = await Hotel.findOneAndUpdate({ slug: hotelSeed.slug }, { $setOnInsert: hotelSeed }, { upsert: true, new: true });
 const rooms = new Map();
 for (const data of roomSeed) {
-  const room = await Room.findOneAndUpdate({ roomNumber: data.roomNumber }, { $setOnInsert: data }, { upsert: true, new: true });
+  const room = await Room.findOneAndUpdate({ hotel: hotel._id, roomNumber: data.roomNumber }, { $set: { ...data, hotel: hotel._id } }, { upsert: true, new: true });
   rooms.set(data.roomNumber, room);
 }
 
@@ -62,5 +75,5 @@ for (const item of bookingSeed) {
   }
 }
 
-console.log(`Demo data ready: ${roomSeed.length} rooms, ${customerSeed.length} sample guests, ${bookingsCreated} new historical bookings.`);
+console.log(`Demo data ready: 1 hotel, ${roomSeed.length} rooms, ${customerSeed.length} sample guests, ${bookingsCreated} new historical bookings.`);
 await mongoose.disconnect();
