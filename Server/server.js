@@ -5,6 +5,8 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import mongoose from 'mongoose';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import api from './routes/api.js';
 
 const app = express();
@@ -20,6 +22,14 @@ app.use(express.json({ limit: '1mb' }));
 app.use('/api/auth', rateLimit({ windowMs: 15 * 60 * 1000, limit: 30, standardHeaders: true, legacyHeaders: false }));
 app.get('/api/health', (_req, res) => res.json({ status: 'ok', service: 'HotelPro API' }));
 app.use('/api', api);
+if (process.env.NODE_ENV === 'production') {
+  const clientDist = resolve(dirname(fileURLToPath(import.meta.url)), '../Client/dist');
+  app.use(express.static(clientDist));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api/')) return next();
+    res.sendFile(resolve(clientDist, 'index.html'), error => { if (error) next(error); });
+  });
+}
 app.use((err, _req, res, _next) => {
   console.error(err);
   res.status(err.status || 500).json({ message: err.code === 11000 ? 'That value is already in use.' : 'Something went wrong. Please try again.' });
@@ -27,5 +37,6 @@ app.use((err, _req, res, _next) => {
 
 const port = process.env.PORT || 5000;
 if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET must be set in the environment.');
+if (process.env.NODE_ENV === 'production' && !process.env.MONGO_URI) throw new Error('MONGO_URI must be set in production.');
 await mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/hotelpro');
 app.listen(port, () => console.log(`HotelPro API listening on ${port}`));

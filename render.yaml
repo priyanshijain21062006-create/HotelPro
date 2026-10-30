@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: hotelpro
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: npm ci --prefix Server && npm ci --prefix Client && npm --prefix Client run build
+    startCommand: npm --prefix Server run create-admin && npm --prefix Server run seed:demo && npm --prefix Server start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: VITE_API_URL
+        value: /api
+      - key: JWT_SECRET
+        generateValue: true
+      - key: MONGO_URI
+        sync: false
+      - key: ADMIN_NAME
+        value: HotelPro Administrator
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
