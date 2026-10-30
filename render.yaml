@@ -4,7 +4,7 @@ services:
     runtime: node
     plan: free
     region: singapore
-    buildCommand: npm ci --prefix Server && npm ci --prefix Client && npm --prefix Client run build
+    buildCommand: npm ci --prefix Server && npm ci --include=dev --prefix Client && node Client/node_modules/vite/bin/vite.js build
     startCommand: npm --prefix Server run create-admin && npm --prefix Server run seed:demo && npm --prefix Server start
     healthCheckPath: /api/health
     envVars:
